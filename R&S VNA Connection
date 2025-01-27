@@ -1,0 +1,65 @@
+#connecting to the VNA 
+import tkinter as tk
+from tkinter import ttk
+import pyvisa 
+import RsInstrument
+from RsInstrument import *
+
+#############VNA CONNECTION#########################
+VNA = 'USB0::0x0AAD::0x01E7::101242::INSTR'
+####################################################
+def VNA_connection():
+    global vna
+    try: 
+        #rm = pyvisa.ResourceManager()
+        #list = rm.list_resources()
+        #print(f"Connected to {list}" )
+        vna = RsInstrument(VNA)
+        connection_label.config(text = f"Connected")
+        connection_light.itemconfig(vna_light, fill = "green")
+    except:
+        connection_label.config(text = "Could not connect")
+        connection_light.itemconfig(vna_light, fill = "red")
+#############################################################
+#Importing live feed interface##############################
+def measu_setup():#Setting the #of points and the freq span
+    vna.write_with_opc("*RST")
+    vna.write_with_opc("SWE:POIN 3259")
+    vna.write_with_opc("FREQ:STAR 9000;:FREQ:STOP 29339000")
+    vna.timeout=(5)
+    freq = vna.query("FREQ:STAR?")
+    endfreq1 = vna.query("FREQ:STOP?")
+    startfreq = float(freq[0])
+    endfreq = float(endfreq1[0])
+    freq_label.config(text =f"Starting Freq is {startfreq}kHz\nThe Ending frequency is {endfreq} MHz")
+    
+
+#creating the interface
+root = tk.Tk()
+root.title("VNA Control")
+###################VNA CONNECTION INTERFACE##################
+connection_label = ttk.Label(root, text = "VNA Connection")
+connection_label.grid(column = 2, row = 0, columnspan=2, pady = 10)
+
+connection_light = tk.Canvas(root, width = 30, height = 30)
+connection_light.grid(column = 4, row = 0)
+vna_light = connection_light.create_oval(2, 2, 28, 28, fill = "gray")
+
+connection_button = tk.Button(root, text = "Connect to VNA", command = VNA_connection)
+connection_button.grid(column = 2, row = 1, columnspan=2, pady = 10)
+
+connection_label = ttk.Label(root, text = "     ")
+connection_label.grid(column = 5, row = 0, columnspan= 2, pady = 10)
+##############################################################
+##################MAKING SETUP BUTTON########################
+setup_button = tk.Button(root, text = "Setup TDR", command = measu_setup)
+setup_button.grid(column = 2, row = 2, columnspan=2, pady = 10)
+
+freq_label = ttk.Label(root, text = "  ")
+freq_label.grid(column = 4, row = 2, columnspan=2, pady = 10)
+##############################################################
+####################Making display view button#################
+disp_button = tk.Button(root, text = "Setup TDR", command = window_disp)
+disp_button.grid(column = 2, row = 3, columnspan=2, pady = 10)
+
+root.mainloop()
